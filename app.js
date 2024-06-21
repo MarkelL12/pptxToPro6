@@ -14,15 +14,29 @@ textSlides.forEach(slide => {
 })
 
 var b64RTFSlides = [];
-textSlides.forEach(slide =>{ //might not be working
-    const convertToRTF = (text) => {
-        let rtf = '{\\rtf1\\ansi\n';
-        rtf += text.split('\n').map(line => line.replace(/\\/g, '\\\\').replace(/{/g, '\\{').replace(/}/g, '\\}')).join('\\par\n');
-        rtf += '}';
-        return rtf;
-    };
-    let rtfContent = convertToRTF(slide);
-    b64RTFSlides.push(rtfContent);
+const rtfHeader = `{\\rtf1\\prortf1\\ansi\\ansicpg1252\\uc1\\htmautsp\\deff2` +
+`{\\fonttbl{\\f0\\fcharset0 Times New Roman;}{\\f2\\fcharset0 Georgia;}{\\f3\\fcharset0 Segoe UI;}}` +
+`{\\colortbl;\\red0\\green0\\blue0;\\red255\\green255\\blue255;\\red250\\green235\\blue215;}` +
+`\\loch\\hich\\dbch\\pard\\slleading0\\plain\\ltrpar\\itap0` +
+`{\\lang1033\\fs32\\outl0\\strokewidth-60\\strokec1\\f2\\cf1 \\cf1\\qc`;
+
+const rtfFooter = '\\li0\\sa0\\sb0\\fi0\\qc}}';
+
+textSlides.forEach(slide =>{
+  let rtfLinesArray = [];
+  let lines = slide.split("\n")
+  lines.forEach(line =>{
+    const unicodeText = line.split('').map(char => {
+      let code = char.charCodeAt(0);
+      return `\\u${code}?`;
+    }).join('');
+
+    rtfLinesArray.push(`{\\fs180\\outl0\\strokewidth-60\\strokec1\\f3{\\cf3\\ltrch ${unicodeText}}\\li0\\sa0\\sb0\\fi0\\qc\\par}`)
+  })
+    let rtfLines = rtfLinesArray.join('');
+    let rtfContent = rtfHeader + rtfLines + rtfFooter;
+    let b64RTFContent = Buffer.from(rtfContent).toString('base64');
+    b64RTFSlides.push(b64RTFContent);
 })
 const slideHeader = fs.readFileSync('./presentationSrc/presentationHeader.txt').toString();
 const slideFooter = fs.readFileSync('./presentationSrc/presentationFooter.txt').toString();
